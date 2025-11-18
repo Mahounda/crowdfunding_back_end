@@ -11,4 +11,6 @@ class FundraiserSerializer(serializers.ModelSerializer):
     fields = '__all__'
 
 class FundraiserDetailSerializer(FundraiserSerializer):
+  owner = serializers.ReadOnlyField(source='owner.id')
+  
   pledges = PledgeSerializer(many=True, read_only=True)
