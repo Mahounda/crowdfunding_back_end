@@ -22,7 +22,7 @@ class CustomUserList(APIView):
       serializer.save()
       return Response(
         serializer.data,
-        status=status.Http_201_CREATED
+        status=status.HTTP_201_CREATED
       )
     return Response(
       serializer.errors,
@@ -30,16 +30,16 @@ class CustomUserList(APIView):
     )
   
 class CustomUserDetail(APIView):
-    def get_object(self, pk):
-      try:
-        return CustomUser.objects.get(pk=pk)
-      except CustomUser.DoesNotExist:
-        raise Http404
-      
-      def get(self, request, pk):
-        user = self.get_object(pk)
-        serializer = CustomUserSerializer(user)
-        return Response(serializer.data)
+  def get_object(self, pk):
+    try:
+      return CustomUser.objects.get(pk=pk)
+    except CustomUser.DoesNotExist:
+      raise Http404
+    
+  def get(self, request, pk):
+    user = self.get_object(pk)
+    serializer = CustomUserSerializer(user)
+    return Response(serializer.data)
       
 class CustomAuthToken(ObtainAuthToken): 
   def post(self, request, *args, **kwargs): 
