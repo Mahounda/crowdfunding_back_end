@@ -25,6 +25,7 @@ class FundraiserList(APIView):
         serializer = FundraiserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(owner=request.user)
+            serializer.save(owner=self.request.user)
             return Response(
                 serializer.data,
                 status=status.HTTP_201_CREATED
@@ -46,6 +47,15 @@ class FundraiserDetail(APIView):
         fundraiser = self.get_object(pk)
         serializer = FundraiserDetailSerializer(fundraiser)
         return Response(serializer.data)
+    
+    def patch(self, request, pk):
+        fundraiser = self.get_object(pk)
+        serializer = FundraiserDetailSerializer(
+        fundraiser,
+        data=request.data,
+        partial=True
+    )
+
     def put(self, request, pk):
         fundraiser = self.get_object(pk)
         serializer = FundraiserDetailSerializer(
