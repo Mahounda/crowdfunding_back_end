@@ -35,11 +35,14 @@ class FundraiserList(APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
 class FundraiserDetail(APIView):
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly,
+        IsOwnerOrReadOnly
+    ]
+
     def get_object(self, pk):
         try:
-            fundraiser = Fundraiser.objects.get(pk=pk)
-            self.check_object_permissions(self.request, fundraiser)
-            return fundraiser
+            return Fundraiser.objects.get(pk=pk)
         except Fundraiser.DoesNotExist:
             raise Http404
 
@@ -47,19 +50,11 @@ class FundraiserDetail(APIView):
         fundraiser = self.get_object(pk)
         serializer = FundraiserDetailSerializer(fundraiser)
         return Response(serializer.data)
-    
+
     def patch(self, request, pk):
         fundraiser = self.get_object(pk)
         serializer = FundraiserDetailSerializer(
-        fundraiser,
-        data=request.data,
-        partial=True
-    )
-
-    def put(self, request, pk):
-        fundraiser = self.get_object(pk)
-        serializer = FundraiserDetailSerializer(
-            instance=fundraiser,
+            fundraiser,
             data=request.data,
             partial=True
         )
@@ -67,20 +62,23 @@ class FundraiserDetail(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
+    def put(self, request, pk):
+        fundraiser = self.get_object(pk)
+        serializer = FundraiserDetailSerializer(
+            fundraiser,
+            data=request.data
         )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         fundraiser = self.get_object(pk)
         fundraiser.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-
-
 
 class PledgeList(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
