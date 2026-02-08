@@ -42,7 +42,9 @@ class FundraiserDetail(APIView):
 
     def get_object(self, pk):
         try:
-            return Fundraiser.objects.get(pk=pk)
+            fundraiser = Fundraiser.objects.get(pk=pk)
+            self.check_object_permissions(self.request, fundraiser)
+            return fundraiser
         except Fundraiser.DoesNotExist:
             raise Http404
 
