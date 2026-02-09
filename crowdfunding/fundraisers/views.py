@@ -1,13 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, permissions
 from django.http import Http404
+
 from .models import Fundraiser, Pledge
 from .serializers import FundraiserSerializer, PledgeSerializer, FundraiserDetailSerializer
-
-from rest_framework import status, permissions
-from .permissions import IsOwnerOrReadOnly
-from .permissions import IsSupporterOrReadOnly
+from .permissions import IsOwnerOrReadOnly, IsSupporterOrReadOnly
 
 
 class FundraiserList(APIView):
@@ -20,20 +18,14 @@ class FundraiserList(APIView):
         fundraisers = Fundraiser.objects.all()
         serializer = FundraiserSerializer(fundraisers, many=True)
         return Response(serializer.data)
-        
+
     def post(self, request):
         serializer = FundraiserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(owner=request.user)
-            serializer.save(owner=self.request.user)
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class FundraiserDetail(APIView):
     permission_classes = [
         permissions.IsAuthenticatedOrReadOnly,
@@ -60,7 +52,6 @@ class FundraiserDetail(APIView):
             data=request.data,
             partial=True
         )
-
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -68,10 +59,7 @@ class FundraiserDetail(APIView):
 
     def put(self, request, pk):
         fundraiser = self.get_object(pk)
-        serializer = FundraiserDetailSerializer(
-            fundraiser,
-            data=request.data
-        )
+        serializer = FundraiserDetailSerializer(fundraiser, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -79,8 +67,17 @@ class FundraiserDetail(APIView):
 
     def delete(self, request, pk):
         fundraiser = self.get_object(pk)
+
+        # Only superusers can delete
+        if not request.user.is_superuser:
+            return Response(
+                {"detail": "Only administrators can delete fundraisers."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         fundraiser.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class PledgeList(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
@@ -94,14 +91,9 @@ class PledgeList(APIView):
         serializer = PledgeSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(supporter=request.user)
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class PledgeDetail(APIView):
     permission_classes = [
@@ -111,9 +103,7 @@ class PledgeDetail(APIView):
 
     def get_object(self, pk):
         try:
-            print(pk)
             pledge = Pledge.objects.get(pk=pk)
-            print(pledge)
             self.check_object_permissions(self.request, pledge)
             return pledge
         except Pledge.DoesNotExist:
@@ -134,8 +124,17 @@ class PledgeDetail(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    def delete(self, request, pk):
+        pledge = self.get_object(pk)
+
+        if not request.user.is_superuser:
+            return Response(
+                {"detail": "Only administrators can delete pledges."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        pledge.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
