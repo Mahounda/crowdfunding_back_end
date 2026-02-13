@@ -113,14 +113,21 @@ class PledgeDetail(APIView):
         pledge = self.get_object(pk)
         serializer = PledgeSerializer(pledge)
         return Response(serializer.data)
-
+    
     def put(self, request, pk):
         pledge = self.get_object(pk)
+
+        if not pledge.fundraiser.is_open and not request.user.is_superuser:
+            return Response(
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         serializer = PledgeSerializer(
-        instance=pledge,
-        data=request.data,
-        partial=True
+            instance=pledge,
+            data=request.data,
+            partial=True
         )
+        
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -131,7 +138,11 @@ class PledgeDetail(APIView):
 
         if not request.user.is_superuser:
             return Response(
-                {"detail": "Only administrators can delete pledges."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if not pledge.fundraiser.is_open:
+            return Response(
                 status=status.HTTP_403_FORBIDDEN
             )
 

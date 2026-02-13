@@ -3,12 +3,13 @@ from django.apps import apps
 class PledgeSerializer(serializers.ModelSerializer):
   supporter = serializers.ReadOnlyField(source='supporter.id')
   def update(self, instance, validated_data):
-        
+        print("FUNDRAISER UPDATE CALLED")
         instance.amount = validated_data.get('amount', instance.amount)
         instance.comment = validated_data.get('comment', instance.comment)
         instance.anonymous = validated_data.get('anonymous', instance.anonymous)
         instance.fundraiser = validated_data.get('fundraiser', instance.fundraiser)
         instance.supporter = validated_data.get('supporter', instance.supporter)
+        instance.image = validated_data.get('image', instance.image)
         instance.save()
         return instance
 
@@ -18,6 +19,8 @@ class PledgeSerializer(serializers.ModelSerializer):
 
 class FundraiserSerializer(serializers.ModelSerializer):
   owner = serializers.ReadOnlyField(source='owner.id')
+  image = serializers.URLField(required=False)
+
   class Meta:
     model = apps.get_model('fundraisers.Fundraiser')
     fields = '__all__'
@@ -26,10 +29,11 @@ class FundraiserDetailSerializer(FundraiserSerializer):
     pledges = PledgeSerializer(many=True, read_only=True)
 
     def update(self, instance, validated_data) : 
+        print("VALIDATED DATA:", validated_data) 
         instance.title = validated_data.get('title' , instance.title)
         instance.description = validated_data.get('description', instance.description)
         instance.goal = validated_data.get('goal', instance.goal)
         instance.is_open = validated_data.get('is_open', instance.is_open)
-        instance.date_created = validated_data.get('date_created', instance.date_created)
+        instance.image = validated_data.get('image', instance.image)
         instance.save()
         return instance
