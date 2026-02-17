@@ -136,12 +136,12 @@ class PledgeDetail(APIView):
     def delete(self, request, pk):
         pledge = self.get_object(pk)
 
-        if not request.user.is_superuser:
+        if pledge.supporter != request.user and not request.user.is_superuser:
             return Response(
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        if not pledge.fundraiser.is_open:
+        if not pledge.fundraiser.is_open and not request.user.is_superuser:
             return Response(
                 status=status.HTTP_403_FORBIDDEN
             )
