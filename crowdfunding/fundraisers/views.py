@@ -32,6 +32,11 @@ class FundraiserDetail(APIView):
         IsOwnerOrReadOnly
     ]
 
+    def check_object_permissions(self, request, obj):
+        if request.user and request.user.is_superuser:
+            return
+        super().check_object_permissions(request, obj)
+
     def get_object(self, pk):
         try:
             fundraiser = Fundraiser.objects.get(pk=pk)
