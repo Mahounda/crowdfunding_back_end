@@ -16,8 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 from users.views import CustomAuthToken
+
+def home(request):
+    return JsonResponse({"status": "API running"})
+
 urlpatterns = [
+    path('', home),  # Homepage for Heroku root
+    
     path('admin/', admin.site.urls),
     path('', include('fundraisers.urls')),
     path('', include('users.urls')),
